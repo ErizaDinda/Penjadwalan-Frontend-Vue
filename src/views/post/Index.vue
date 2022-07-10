@@ -39,8 +39,10 @@
                             class="list-group-item text-dark text-decoration-none">JADKUL</router-link>
                         </ul>
                         <ul class="list-group">
-                            <router-link :to="{name: 'post.dashboard'}"
+                            <router-link :to="{name: 'post.index'}"
                             class="list-group-item text-dark text-decoration-none">WAKTU TIDAK BERSEDIA</router-link>
+                            <li @click.prevent="logout" class="list-group-item text-dark text-decoration-none" 
+                            style="cursor:pointer">LOGOUT</li>
                         </ul>
                     </div>
                 </div>
@@ -83,16 +85,33 @@
 <script>
 import axios from 'axios'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 
 export default {
 
     setup() {
+        //state token
+            const token = localStorage.getItem('token')
+
+            //inisialisasi vue router on Composition API
+            const router = useRouter()
+            
+            //state user
+            const user = ref('')
 
         //reactive state
         let posts = ref([])
 
         //mounted
         onMounted(() => {
+
+                //check Token exist
+                if(!token) {
+                return router.push({
+                name: 'login'
+            })
+        }
 
             //get API from Laravel Backend
             axios.get('http://localhost/Penjadwalan/Penjadwalan-Backend/public/api/jam')
@@ -126,10 +145,35 @@ export default {
         }
         }
 
+         //method logout
+         function logout() {
+
+        //logout
+        axios.defaults.headers.common.Authorization = `Bearer ${token}`
+        axios.post('http://localhost/Penjadwalan/Penjadwalan-Backend/public/api/logout')
+        .then(response => {
+
+            if(response.data.success){
+
+                //remove localStorage
+                localStorage.removeItem('token')
+
+                //redirect ke halaman login
+                return router.push({
+                    name : 'login'
+                })
+            }
+        })
+        .catch(error => {
+            console.log(error.response.data)
+        })
+    }
+
         //return
         return {
             posts,
-            postDelete
+            postDelete,
+            logout
             
         }
 
